@@ -1,0 +1,6 @@
+.couscous
+composer.lock
+.phpintel
+review/
+vendor/
+**/.tags*
