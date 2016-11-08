@@ -1,5 +1,5 @@
 {
-    "name": "ganbarodigital/php-mv-http-client",
+    "name": "ganbarodigital/php-mv-service-logger",
     "type": "library",
     "license": "BSD-3-Clause",
     "authors": [
@@ -13,9 +13,6 @@
     ],
     "require": {
         "php": ">= 5.5",
-        "ganbarodigital/php-http-status": "^2.0",
-        "ganbarodigital/php-mv-exception-helpers": "^v1.2016050201",
-        "ganbarodigital/php-mv-json-parser": "^1.0",
         "monolog/monolog": "^1.21"
     },
     "require-dev": {
