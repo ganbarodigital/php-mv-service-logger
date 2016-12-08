@@ -43,6 +43,7 @@
 
 namespace GanbaroDigital\ServiceLogger\V1;
 
+use Error;
 use Exception;
 use Monolog\Logger;
 use GanbaroDigital\ExceptionHelpers\V1\BaseExceptions\ParameterisedException;
@@ -84,4 +85,18 @@ class ServiceLogger extends Logger
         // call our underlying logger
         $this->addRecord($logLevel, get_class($exception) . ': ' . $exception->getMessage(), $context);
     }
+
+    /**
+      * @param Error $error
+      *        log the PHP 7+ error that has been thrown
+      * @param string $logLevel
+      *        which log level are we logging this to?
+      */
+     public function logError(Error $error, $logLevel = Logger::ERROR)
+     {
+         $context = [ 'error' => $error ];
+
+         // call our underlying logger
+         $this->addRecord($logLevel, get_class($error) . ': ' . $error->getMessage(), $context);
+     }
 }
