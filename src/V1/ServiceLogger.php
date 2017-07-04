@@ -75,6 +75,7 @@ class ServiceLogger extends Logger
             if ($exception instanceof HttpException) {
                 $context['httpStatus'] = $exception->getHttpStatus()->getStatusCode();
             }
+            $context['stackTrace'] = $exception->getTraceAsString();
         }
         else {
             // could be anything
