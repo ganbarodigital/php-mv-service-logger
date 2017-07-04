@@ -43,61 +43,35 @@
 
 namespace GanbaroDigital\ServiceLogger\V1;
 
-use Error;
-use Exception;
-use Monolog\Logger;
-use GanbaroDigital\ExceptionHelpers\V1\BaseExceptions\ParameterisedException;
-use GanbaroDigital\HttpStatus\Interfaces\HttpException;
+use Psr\Http\Message\ServerRequestInterface;
 
 /**
- * a convenience wrapper around Monolog's logger
+ * get user/request tokens from the current request
  */
-class ServiceLogger extends Logger
+class ExtractUserRequestTokens
 {
-   /**
-     * @param Exception $exception
-     *        log the exception that has been thrown
-     * @param string $logLevel
-     *        which log level are we logging this to?
-     */
-    public function logException(Exception $exception, $logLevel = Logger::ERROR)
+    public static function from(ServerRequestInterface $request)
     {
-        // is this one of our enhanced exceptions?
-        //
-        // these exceptions contain a wealth of collected data, and are
-        // designed to make it a buck-tonne easier to diagnose runtime
-        // errors
-        if ($exception instanceof ParameterisedException) {
-            $context = [
-                'exceptionData' => $exception->getMessageData()
-            ];
+        $retval=[
+            'authToken' => null,
+            'requestToken' => null,
+        ];
 
-            if ($exception instanceof HttpException) {
-                $context['httpStatus'] = $exception->getHttpStatus()->getStatusCode();
+        // do we have anything to track?
+        $headers = $request->getHeaders();
+
+        if (isset($headers['authorization'])) {
+            $parts = explode(' ', $headers['authorization'][0]);
+            if (strtolower($parts[0]) == 'bearer') {
+                $retval['authToken'] = $parts[1];
             }
-            $context['stackTrace'] = $exception->getTraceAsString();
-        }
-        else {
-            // could be anything
-            // log the whole thing ... this might get messy!
-            $context = [ 'exception' => $exception ];
         }
 
-        // call our underlying logger
-        $this->addRecord($logLevel, get_class($exception) . ': ' . $exception->getMessage(), $context);
+        if (isset($headers['x-request-id'])) {
+            $retval['requestToken'] = $headers['x-request-id'][0];
+        }
+
+        // all done
+        return $retval;
     }
-
-    /**
-      * @param Error $error
-      *        log the PHP 7+ error that has been thrown
-      * @param string $logLevel
-      *        which log level are we logging this to?
-      */
-     public function logError(Error $error, $logLevel = Logger::ERROR)
-     {
-         $context = [ 'error' => $error ];
-
-         // call our underlying logger
-         $this->addRecord($logLevel, get_class($error) . ': ' . $error->getMessage(), $context);
-     }
 }

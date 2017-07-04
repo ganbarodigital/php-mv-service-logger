@@ -43,61 +43,26 @@
 
 namespace GanbaroDigital\ServiceLogger\V1;
 
-use Error;
-use Exception;
 use Monolog\Logger;
-use GanbaroDigital\ExceptionHelpers\V1\BaseExceptions\ParameterisedException;
-use GanbaroDigital\HttpStatus\Interfaces\HttpException;
 
 /**
- * a convenience wrapper around Monolog's logger
+ * add user/request tracking tokens to the logs
  */
-class ServiceLogger extends Logger
+class TrackUserRequestTokens
 {
-   /**
-     * @param Exception $exception
-     *        log the exception that has been thrown
-     * @param string $logLevel
-     *        which log level are we logging this to?
-     */
-    public function logException(Exception $exception, $logLevel = Logger::ERROR)
-    {
-        // is this one of our enhanced exceptions?
-        //
-        // these exceptions contain a wealth of collected data, and are
-        // designed to make it a buck-tonne easier to diagnose runtime
-        // errors
-        if ($exception instanceof ParameterisedException) {
-            $context = [
-                'exceptionData' => $exception->getMessageData()
-            ];
-
-            if ($exception instanceof HttpException) {
-                $context['httpStatus'] = $exception->getHttpStatus()->getStatusCode();
-            }
-            $context['stackTrace'] = $exception->getTraceAsString();
-        }
-        else {
-            // could be anything
-            // log the whole thing ... this might get messy!
-            $context = [ 'exception' => $exception ];
-        }
-
-        // call our underlying logger
-        $this->addRecord($logLevel, get_class($exception) . ': ' . $exception->getMessage(), $context);
-    }
-
     /**
-      * @param Error $error
-      *        log the PHP 7+ error that has been thrown
-      * @param string $logLevel
-      *        which log level are we logging this to?
-      */
-     public function logError(Error $error, $logLevel = Logger::ERROR)
-     {
-         $context = [ 'error' => $error ];
-
-         // call our underlying logger
-         $this->addRecord($logLevel, get_class($error) . ': ' . $error->getMessage(), $context);
-     }
+     * add user/request tracking tokens to the logs
+     *
+     * @param  Logger $logger
+     *         the logger that needs to include the tokens in every
+     *         log message
+     * @param  array $tokens
+     *         the tokens that we want to track
+     * @return void
+     */
+    public static function using(Logger $logger, $tokens)
+    {
+        $processor = new UserRequestTokenProcessor($tokens);
+        $logger->pushProcessor($processor);
+    }
 }
