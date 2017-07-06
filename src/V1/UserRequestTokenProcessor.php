@@ -71,4 +71,9 @@ class UserRequestTokenProcessor
 
         return $record;
     }
+
+    public function setTokens($tokens)
+    {
+        $this->tokens = $tokens;
+    }
 }
