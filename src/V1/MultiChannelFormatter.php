@@ -43,37 +43,43 @@
 
 namespace GanbaroDigital\ServiceLogger\V1;
 
-use Psr\Http\Message\ServerRequestInterface;
+use Monolog\Formatter\LineFormatter;
 
 /**
- * track additional tokens in our logs
- *
- * user token: normally an OAuth2 token
- * - so we can find all activity by a given user
- * request token: an X-Request-Id header
- * - so we can do end-to-end tracing of an individual action
+ * Log-line formatter for Monolog
  */
-class UserRequestTokenProcessor
+class MultiChannelFormatter extends LineFormatter
 {
-    private $tokens = [];
+    /**
+     * the items that we want to show in our logs
+     */
+    const LINE_FORMAT = "%datetime% || %channel% || %level_name% || %message% || %context% || %extra%\n";
 
-    public function __construct($tokens)
+    /**
+     * create our new formatter
+     */
+    public function __construct()
     {
-        $this->tokens = $tokens;
+        parent::__construct(self::LINE_FORMAT, 'c', false);
+        $this->includeStacktraces(true);
     }
 
-    public function __invoke(array $record)
+    /**
+     * the magic sauce :)
+     *
+     * @param  string $line
+     *         the line that we need to reformat
+     * @return string
+     *         the corrected line, ready to write to the logs
+     */
+    protected function replaceNewlines($line)
     {
-        // append the tokens to the logs
-        foreach ($this->tokens as $name => $value) {
-            $record['extra'][$name] = $value;
-        }
+        // the app can generate multi-line log messages
+        //
+        // however ... UNIX log-management tools (syslog, ELK et al) all
+        // assume/require/only work if every log message is a single line
+        // of text
 
-        return $record;
-    }
-
-    public function setTokens($tokens)
-    {
-        $this->tokens = $tokens;
+        return str_replace(["\r\n", "\r", "\n"], ['\\r\\n', '\\r', '\\n'], $line);
     }
 }
